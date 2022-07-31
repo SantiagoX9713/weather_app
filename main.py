@@ -1,15 +1,26 @@
-from venv import create
 from app import create_app
 import requests
 import json
-
+import gzip
 
 app = create_app
 
 
-r = requests.get('https://smn.conagua.gob.mx/webservices/?method=1')
-print(r.status_code)
-print(r.headers)
-# print(r.json())
-# with open('new_file.json', 'w') as f:
-#     json.dump(r.json(), f, indent=2)
+response = requests.get('https://smn.conagua.gob.mx/webservices/?method=3', verify=False, timeout=60)
+print(response.status_code)
+headers_json = dict(response.headers)
+
+for k,v in headers_json.items():
+    print(k,': ',v)
+
+if response.content == '':
+    print('File Empty')
+
+else:
+    gzip_fd = gzip.GzipFile(fileobj=response.content)
+    gzip_fd = gzip.decompress(response.content)
+    parsed = json.loads(gzip_fd)
+    with open('forecast.json', 'w') as file:
+        json.dump(parsed,file)
+        print('Done')
+    
